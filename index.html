@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Housie Number Generator</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+          rel="stylesheet">
+
+    <style>
+        :root {
+            --body-bg: #f0f4f8;
+            --container-bg: #ffffff;
+
+            --primary-text: #1e3a8a;
+            --secondary-text: #4b5563;
+
+            --grid-bg: #eff6ff;
+            --grid-border: #bfdbfe;
+
+            --cell-bg: #ffffff;
+            --cell-text: #1e3a8a;
+            --cell-border: #dbeafe;
+
+            --called-bg: #2563eb;
+            --called-text: #ffffff;
+
+            --button-bg: #1e3a8a;
+            --button-hover-bg: #1d4ed8;
+
+            --accent-color: #0099ff;
+
+            /* Cheat selection color */
+            --select-bg: #f59e0b;
+            --select-hover-bg: #d97706;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--body-bg);
+
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+
+            min-height: 100vh;
+
+            margin: 0;
+            padding: 1rem;
+
+            color: var(--secondary-text);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+
+            background-color: var(--container-bg);
+
+            border-radius: 16px;
+
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+
+            padding: 2rem;
+
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-text);
+            margin-bottom: 2rem;
+        }
+
+        .controls-display {
+            display: flex;
+            flex-wrap: wrap;
+
+            justify-content: space-around;
+            align-items: center;
+
+            gap: 2rem;
+
+            margin-bottom: 2rem;
+        }
+
+        .current-number-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            gap: 1rem;
+        }
+
+        .current-number-wrapper h2 {
+            margin: 0 0 0.5rem 0;
+
+            color: var(--secondary-text);
+
+            font-size: 1.2rem;
+        }
+
+        #current-number {
+            width: 120px;
+            height: 120px;
+
+            background-color: var(--accent-color);
+
+            color: white;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 4rem;
+            font-weight: 700;
+
+            border-radius: 50%;
+
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+
+            overflow: hidden;
+        }
+
+        .history-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .history-wrapper h2 {
+            margin: 0 0 0.5rem 0;
+
+            color: var(--secondary-text);
+
+            font-size: 1.2rem;
+        }
+
+        #history-display {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .history-number {
+            width: 40px;
+            height: 40px;
+
+            background-color: var(--grid-bg);
+
+            color: var(--secondary-text);
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 1.2rem;
+            font-weight: 600;
+
+            border-radius: 8px;
+
+            border: 1px solid var(--grid-border);
+        }
+
+        /*
+         * Main 1-90 number board
+         */
+        #number-board {
+            display: grid;
+
+            grid-template-columns: repeat(10, 1fr);
+
+            gap: 6px;
+
+            background-color: var(--grid-bg);
+
+            border: 2px solid var(--grid-border);
+
+            padding: 8px;
+
+            border-radius: 12px;
+
+            margin-bottom: 2rem;
+        }
+
+        .board-cell {
+            width: 100%;
+
+            aspect-ratio: 1 / 1;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: clamp(0.8rem, 2.5vw, 1.2rem);
+
+            font-weight: 600;
+
+            border-radius: 6px;
+
+            background-color: var(--cell-bg);
+
+            color: var(--cell-text);
+
+            border: 1px solid var(--cell-border);
+
+            transition: all 0.2s ease;
+
+            /*
+             * Makes the cells look clickable
+             */
+            cursor: pointer;
+
+            user-select: none;
+        }
+
+        /*
+         * Hover effect for uncalled numbers
+         */
+        .board-cell:not(.called):hover {
+            background-color: var(--select-bg);
+
+            color: white;
+
+            transform: scale(1.05);
+
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        /*
+         * Called numbers
+         */
+        .board-cell.called {
+            background-color: var(--called-bg);
+
+            color: var(--called-text);
+
+            transform: scale(1.05);
+
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+
+            cursor: not-allowed;
+        }
+
+        /*
+         * Number currently selected through cheat
+         * before final reveal.
+         */
+        .board-cell.cheat-selected {
+            background-color: var(--select-bg);
+
+            color: white;
+
+            transform: scale(1.08);
+
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+        }
+
+        .actions {
+            display: flex;
+
+            justify-content: center;
+
+            gap: 1rem;
+        }
+
+        .action-btn {
+            background-color: var(--button-bg);
+
+            color: white;
+
+            border: none;
+
+            padding: 12px 24px;
+
+            font-size: 1rem;
+
+            font-weight: 600;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            transition: background-color 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background-color: var(--button-hover-bg);
+        }
+
+        .action-btn:disabled {
+            background-color: #9ca3af;
+
+            cursor: not-allowed;
+        }
+
+        /*
+         * Instruction below the grid
+         */
+        .cheat-info {
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+
+            font-size: 0.9rem;
+
+            color: #6b7280;
+        }
+
+        .cheat-info strong {
+            color: var(--select-bg);
+        }
+
+        /*
+         * Mobile adjustments
+         */
+        @media (max-width: 600px) {
+
+            body {
+                padding: 0.5rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            #number-board {
+                gap: 4px;
+                padding: 5px;
+            }
+
+            .board-cell {
+                border-radius: 4px;
+            }
+
+            #current-number {
+                width: 100px;
+                height: 100px;
+
+                font-size: 3rem;
+            }
+
+            #history-display {
+                gap: 0.3rem;
+            }
+
+            .history-number {
+                width: 35px;
+                height: 35px;
+
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Housie Number Generator</h1>
+
+    <div class="controls-display">
+
+        <!-- CURRENT NUMBER -->
+        <div class="current-number-wrapper">
+
+            <h2>Current Number</h2>
+
+            <div id="current-number">-</div>
+
+            <button id="call-btn" class="action-btn">
+                Get Next Number
+            </button>
+
+        </div>
+
+
+        <!-- HISTORY -->
+        <div class="history-wrapper">
+
+            <div style="margin-bottom: 50px; color: #0099ff;">
+                <a href="housie-ticket.html">
+                    Housie Ticket
+                </a>
+            </div>
+
+            <h2>Last 5 Numbers</h2>
+
+            <div id="history-display"></div>
+
+        </div>
+
+    </div>
+
+
+    <!--
+        Instruction for the manual selection functionality
+    -->
+    <div class="cheat-info">
+        Click any <strong>uncalled number</strong> on the board to call that number.
+    </div>
+
+
+    <!-- NUMBER BOARD -->
+
+    <div id="number-board"></div>
+
+
+    <!-- RESET -->
+
+    <div class="actions">
+
+        <button id="reset-btn" class="action-btn">
+            Reset Game
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const numberBoard =
+        document.getElementById('number-board');
+
+    const currentNumberDisplay =
+        document.getElementById('current-number');
+
+    const historyDisplay =
+        document.getElementById('history-display');
+
+    const callBtn =
+        document.getElementById('call-btn');
+
+    const resetBtn =
+        document.getElementById('reset-btn');
+
+
+    /*
+     * Stores numbers that have NOT been called yet.
+     */
+    let availableNumbers = [];
+
+
+    /*
+     * Stores the last 5 called numbers.
+     */
+    let history = [];
+
+
+    /*
+     * Stores animation interval.
+     */
+    let animationInterval = null;
+
+
+    /*
+     * Used to prevent multiple selections
+     * while animation is running.
+     */
+    let isAnimating = false;
+
+
+
+    /*
+     * ============================================================
+     * CREATE 1-90 BOARD
+     * ============================================================
+     */
+
+    function createBoard() {
+
+        numberBoard.innerHTML = '';
+
+        for (let i = 1; i <= 90; i++) {
+
+            const cell = document.createElement('div');
+
+            cell.classList.add('board-cell');
+
+            cell.textContent = i;
+
+            cell.dataset.number = i;
+
+
+            /*
+             * IMPORTANT:
+             *
+             * Clicking a number on the board calls
+             * that exact number.
+             */
+            cell.addEventListener('click', () => {
+
+                handleManualNumberSelection(i);
+
+            });
+
+
+            numberBoard.appendChild(cell);
+        }
+    }
+
+
+
+    /*
+     * ============================================================
+     * RESET GAME
+     * ============================================================
+     */
+
+    function resetGame() {
+
+        /*
+         * Restore all numbers from 1-90.
+         */
+        availableNumbers =
+            Array.from(
+                { length: 90 },
+                (_, i) => i + 1
+            );
+
+
+        /*
+         * Clear history.
+         */
+        history = [];
+
+
+        /*
+         * Reset display.
+         */
+        currentNumberDisplay.textContent = '-';
+
+
+        /*
+         * Reset history display.
+         */
+        updateHistoryDisplay();
+
+
+        /*
+         * Remove called/selected styling.
+         */
+        const cells =
+            document.querySelectorAll('.board-cell');
+
+        cells.forEach(cell => {
+
+            cell.classList.remove('called');
+
+            cell.classList.remove('cheat-selected');
+
+        });
+
+
+        /*
+         * Enable button.
+         */
+        callBtn.disabled = false;
+
+        callBtn.textContent = 'Get Next Number';
+
+        isAnimating = false;
+    }
+
+
+
+    /*
+     * ============================================================
+     * UPDATE HISTORY
+     * ============================================================
+     */
+
+    function updateHistoryDisplay() {
+
+        historyDisplay.innerHTML = '';
+
+
+        /*
+         * Copy history.
+         */
+        const displayItems = [...history];
+
+
+        /*
+         * Fill remaining positions with "-"
+         */
+        while (displayItems.length < 5) {
+
+            displayItems.push('-');
+
+        }
+
+
+        /*
+         * Show maximum 5.
+         */
+        displayItems.slice(0, 5).forEach(num => {
+
+            const historyCell =
+                document.createElement('div');
+
+            historyCell.classList.add('history-number');
+
+            historyCell.textContent = num;
+
+            historyDisplay.appendChild(historyCell);
+
+        });
+    }
+
+
+
+    /*
+     * ============================================================
+     * NORMAL RANDOM NUMBER GENERATOR
+     * ============================================================
+     */
+
+    function callNextNumber() {
+
+        /*
+         * Don't allow another call during animation.
+         */
+        if (isAnimating) {
+            return;
+        }
+
+
+        /*
+         * Check if game is over.
+         */
+        if (availableNumbers.length === 0) {
+
+            currentNumberDisplay.textContent = '🎉';
+
+            callBtn.textContent = 'Game Over!';
+
+            callBtn.disabled = true;
+
+            return;
+        }
+
+
+        /*
+         * Start animation.
+         */
+        isAnimating = true;
+
+        callBtn.disabled = true;
+
+
+        /*
+         * Pick random number ONLY from
+         * numbers that haven't been called.
+         */
+        const randomIndex =
+            Math.floor(
+                Math.random() * availableNumbers.length
+            );
+
+
+        const calledNumber =
+            availableNumbers.splice(
+                randomIndex,
+                1
+            )[0];
+
+
+        /*
+         * Run number animation.
+         */
+        startNumberAnimation();
+
+
+        /*
+         * Reveal final number after 500ms.
+         */
+        setTimeout(() => {
+
+            finishNumberCall(calledNumber);
+
+        }, 500);
+    }
+
+
+
+    /*
+     * ============================================================
+     * CHEAT / MANUAL NUMBER SELECTION
+     * ============================================================
+     */
+
+    function handleManualNumberSelection(number) {
+
+        /*
+         * Don't allow selection while another number
+         * is being animated.
+         */
+        if (isAnimating) {
+            return;
+        }
+
+
+        /*
+         * Check whether number has already been called.
+         */
+        if (!availableNumbers.includes(number)) {
+
+            return;
+
+        }
+
+
+        /*
+         * Start animation.
+         */
+        isAnimating = true;
+
+        callBtn.disabled = true;
+
+
+        /*
+         * Remove selected number from available list.
+         *
+         * This guarantees it cannot be generated again.
+         */
+        const index =
+            availableNumbers.indexOf(number);
+
+        availableNumbers.splice(index, 1);
+
+
+        /*
+         * Highlight selected number temporarily.
+         */
+        const selectedCell =
+            document.querySelector(
+                `.board-cell[data-number='${number}']`
+            );
+
+
+        if (selectedCell) {
+
+            selectedCell.classList.add(
+                'cheat-selected'
+            );
+
+        }
+
+
+        /*
+         * Start the same animation as the normal generator.
+         */
+        startNumberAnimation();
+
+
+        /*
+         * Reveal selected number.
+         */
+        setTimeout(() => {
+
+            finishNumberCall(number);
+
+        }, 500);
+    }
+
+
+
+    /*
+     * ============================================================
+     * NUMBER ANIMATION
+     * ============================================================
+     */
+
+    function startNumberAnimation() {
+
+        /*
+         * Clear any previous animation.
+         */
+        if (animationInterval) {
+
+            clearInterval(animationInterval);
+
+        }
+
+
+        /*
+         * Rapidly display random numbers.
+         */
+        animationInterval =
+            setInterval(() => {
+
+                const randomNumber =
+                    Math.floor(
+                        Math.random() * 90
+                    ) + 1;
+
+                currentNumberDisplay.textContent =
+                    randomNumber;
+
+            }, 25);
+    }
+
+
+
+    /*
+     * ============================================================
+     * FINISH NUMBER CALL
+     * ============================================================
+     */
+
+    function finishNumberCall(number) {
+
+        /*
+         * Stop animation.
+         */
+        if (animationInterval) {
+
+            clearInterval(animationInterval);
+
+            animationInterval = null;
+
+        }
+
+
+        /*
+         * Display final number.
+         */
+        currentNumberDisplay.textContent =
+            number;
+
+
+        /*
+         * Add to history.
+         */
+        history.unshift(number);
+
+
+        /*
+         * Keep only last 5.
+         */
+        if (history.length > 5) {
+
+            history.pop();
+
+        }
+
+
+        /*
+         * Update history UI.
+         */
+        updateHistoryDisplay();
+
+
+        /*
+         * Find corresponding board cell.
+         */
+        const cell =
+            document.querySelector(
+                `.board-cell[data-number='${number}']`
+            );
+
+
+        if (cell) {
+
+            /*
+             * Remove temporary cheat styling.
+             */
+            cell.classList.remove(
+                'cheat-selected'
+            );
+
+
+            /*
+             * Mark as permanently called.
+             */
+            cell.classList.add('called');
+
+        }
+
+
+        /*
+         * Check if all 90 numbers are finished.
+         */
+        if (availableNumbers.length > 0) {
+
+            callBtn.disabled = false;
+
+            isAnimating = false;
+
+        } else {
+
+            /*
+             * Game finished.
+             */
+            currentNumberDisplay.textContent =
+                '🎉';
+
+            callBtn.textContent =
+                'Game Over!';
+
+            callBtn.disabled = true;
+
+            isAnimating = false;
+        }
+    }
+
+
+
+    /*
+     * ============================================================
+     * EVENT LISTENERS
+     * ============================================================
+     */
+
+    callBtn.addEventListener(
+        'click',
+        callNextNumber
+    );
+
+
+    resetBtn.addEventListener(
+        'click',
+        resetGame
+    );
+
+
+
+    /*
+     * ============================================================
+     * INITIAL SETUP
+     * ============================================================
+     */
+
+    createBoard();
+
+    resetGame();
+
+});
+
+</script>
+
+</body>
+</html>
