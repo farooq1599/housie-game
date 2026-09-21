@@ -35,9 +35,6 @@
 
             --accent-color: #0099ff;
 
-            /* Cheat selection color */
-            --select-bg: #f59e0b;
-            --select-hover-bg: #d97706;
         }
 
         * {
@@ -225,13 +222,13 @@
          * Hover effect for uncalled numbers
          */
         .board-cell:not(.called):hover {
-            background-color: var(--select-bg);
+            background-color: #f8fbff;
 
-            color: white;
+            color: var(--cell-text);
 
-            transform: scale(1.05);
+            transform: none;
 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            box-shadow: none;
         }
 
         /*
@@ -254,13 +251,15 @@
          * before final reveal.
          */
         .board-cell.cheat-selected {
-            background-color: var(--select-bg);
+            background-color: #e8f2ff;
 
-            color: white;
+            color: var(--cell-text);
+			
+			border: 1px solid #cfe3f8;
 
-            transform: scale(1.08);
+            transform: scale(1.02);
 
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
         .actions {
@@ -299,22 +298,6 @@
             background-color: #9ca3af;
 
             cursor: not-allowed;
-        }
-
-        /*
-         * Instruction below the grid
-         */
-        .cheat-info {
-            margin-top: -1rem;
-            margin-bottom: 1.5rem;
-
-            font-size: 0.9rem;
-
-            color: #6b7280;
-        }
-
-        .cheat-info strong {
-            color: var(--select-bg);
         }
 
         /*
@@ -388,12 +371,6 @@
 
         <!-- HISTORY -->
         <div class="history-wrapper">
-
-            <div style="margin-bottom: 50px; color: #0099ff;">
-                <a href="housie-ticket.html">
-                    Housie Ticket
-                </a>
-            </div>
 
             <h2>Last 5 Numbers</h2>
 
