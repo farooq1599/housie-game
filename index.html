@@ -251,15 +251,15 @@
          * before final reveal.
          */
         .board-cell.cheat-selected {
-            background-color: #e8f2ff;
+            background-color: #eef6ff;
 
-            color: var(--cell-text);
+            color: #1e3a8a;
 			
-			border: 1px solid #cfe3f8;
+			border: 2px solid #c7ddf5;
 
             transform: scale(1.02);
-
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+			
+			opacity: 0.75;
         }
 
         .actions {
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Stores numbers that have NOT been called yet.
      */
     let availableNumbers = [];
-
+	let selectedNumber = null;
 
     /*
      * Stores the last 5 called numbers.
@@ -600,72 +600,52 @@ document.addEventListener('DOMContentLoaded', () => {
      */
 
     function callNextNumber() {
-
-        /*
-         * Don't allow another call during animation.
-         */
+    
         if (isAnimating) {
             return;
         }
-
-
-        /*
-         * Check if game is over.
-         */
+    
         if (availableNumbers.length === 0) {
-
             currentNumberDisplay.textContent = '🎉';
-
             callBtn.textContent = 'Game Over!';
-
             callBtn.disabled = true;
-
             return;
         }
-
-
-        /*
-         * Start animation.
-         */
+    
         isAnimating = true;
-
         callBtn.disabled = true;
-
-
-        /*
-         * Pick random number ONLY from
-         * numbers that haven't been called.
-         */
-        const randomIndex =
-            Math.floor(
-                Math.random() * availableNumbers.length
-            );
-
-
-        const calledNumber =
-            availableNumbers.splice(
-                randomIndex,
-                1
-            )[0];
-
-
-        /*
-         * Run number animation.
-         */
+    
+        let calledNumber;
+    
+        // Use manually selected number if one exists
+        if (selectedNumber !== null) {
+    
+            calledNumber = selectedNumber;
+    
+            const index = availableNumbers.indexOf(calledNumber);
+    
+            if (index !== -1) {
+                availableNumbers.splice(index, 1);
+            }
+    
+            selectedNumber = null;
+    
+        } else {
+    
+            // Otherwise generate random number
+            const randomIndex =
+                Math.floor(Math.random() * availableNumbers.length);
+    
+            calledNumber =
+                availableNumbers.splice(randomIndex, 1)[0];
+        }
+    
         startNumberAnimation();
-
-
-        /*
-         * Reveal final number after 500ms.
-         */
+    
         setTimeout(() => {
-
             finishNumberCall(calledNumber);
-
         }, 500);
     }
-
-
 
     /*
      * ============================================================
@@ -674,79 +654,34 @@ document.addEventListener('DOMContentLoaded', () => {
      */
 
     function handleManualNumberSelection(number) {
-
-        /*
-         * Don't allow selection while another number
-         * is being animated.
-         */
+    
+        // Don't allow selection while generating
         if (isAnimating) {
             return;
         }
-
-
-        /*
-         * Check whether number has already been called.
-         */
+    
+        // Number already called
         if (!availableNumbers.includes(number)) {
-
             return;
-
         }
-
-
-        /*
-         * Start animation.
-         */
-        isAnimating = true;
-
-        callBtn.disabled = true;
-
-
-        /*
-         * Remove selected number from available list.
-         *
-         * This guarantees it cannot be generated again.
-         */
-        const index =
-            availableNumbers.indexOf(number);
-
-        availableNumbers.splice(index, 1);
-
-
-        /*
-         * Highlight selected number temporarily.
-         */
-        const selectedCell =
-            document.querySelector(
-                `.board-cell[data-number='${number}']`
-            );
-
-
+    
+        // Remove previous selection
+        document.querySelectorAll('.board-cell').forEach(cell => {
+            cell.classList.remove('cheat-selected');
+        });
+    
+        // Select this number only
+        const selectedCell = document.querySelector(
+            `.board-cell[data-number='${number}']`
+        );
+    
         if (selectedCell) {
-
-            selectedCell.classList.add(
-                'cheat-selected'
-            );
-
+            selectedCell.classList.add('cheat-selected');
         }
-
-
-        /*
-         * Start the same animation as the normal generator.
-         */
-        startNumberAnimation();
-
-
-        /*
-         * Reveal selected number.
-         */
-        setTimeout(() => {
-
-            finishNumberCall(number);
-
-        }, 500);
+    
+        // Store selected number
+        selectedNumber = number;
     }
-
 
 
     /*
